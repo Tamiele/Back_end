@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 @RestController
@@ -42,13 +44,16 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<Map<String, String>> register(@RequestBody RegisterRequest registerRequest) {
         // Controlla se i ruoli sono stati forniti
         if (registerRequest.getRoles() == null || registerRequest.getRoles().isEmpty()) {
-            return ResponseEntity.badRequest().body("Il ruolo è obbligatorio (es. ROLE_USER o ROLE_PERSONAL_TRAINER)");
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("message", "Il ruolo è obbligatorio (es. ROLE_USER o ROLE_PERSONAL_TRAINER)");
+            return ResponseEntity.badRequest().body(errorResponse);
         }
 
         // Verifica il ruolo e registra l'utente
+        Map<String, String> response = new HashMap<>();
         if (registerRequest.getRoles().contains(Role.ROLE_USER)) {
             clienteService.registerCliente(
                     registerRequest.getUsername(),
@@ -58,7 +63,8 @@ public class AuthController {
                     registerRequest.getCognome(),
                     registerRequest.getDataDiNascita()
             );
-            return ResponseEntity.ok("Cliente registrato con successo");
+            response.put("message", "Cliente registrato con successo");
+            return ResponseEntity.ok(response);
         } else if (registerRequest.getRoles().contains(Role.ROLE_PERSONAL_TRAINER)) {
             personalTrainerService.registerPersonalTrainer(
                     registerRequest.getUsername(),
@@ -68,9 +74,11 @@ public class AuthController {
                     registerRequest.getCognome(),
                     registerRequest.getDataDiNascita()
             );
-            return ResponseEntity.ok("Personal Trainer registrato con successo");
+            response.put("message", "Personal Trainer registrato con successo");
+            return ResponseEntity.ok(response);
         } else {
-            return ResponseEntity.badRequest().body("Ruolo non valido. Usa ROLE_USER o ROLE_PERSONAL_TRAINER");
+            response.put("message", "Ruolo non valido. Usa ROLE_USER o ROLE_PERSONAL_TRAINER");
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
