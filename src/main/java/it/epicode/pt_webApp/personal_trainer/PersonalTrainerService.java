@@ -50,7 +50,7 @@ public class PersonalTrainerService {
 
     //metodo per aggiungere un cliente ad un personal trainer
     public void assignClienteToTrainerByUsername(String trainerUsername, Long clienteId) {
-        // Trova il Personal Trainer tramite username
+
         PersonalTrainer trainer = personalTrainerRepository.findByUsername(trainerUsername)
                 .orElseThrow(() -> new EntityNotFoundException("Personal Trainer non trovato con username: " + trainerUsername));
 
@@ -67,7 +67,7 @@ public class PersonalTrainerService {
         cliente.setPersonalTrainer(trainer);
         trainer.getClienti().add(cliente);
 
-        // Salva le modifiche
+
         personalTrainerRepository.save(trainer);
     }
 
