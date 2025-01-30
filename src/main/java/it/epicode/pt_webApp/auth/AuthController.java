@@ -22,15 +22,7 @@ public class AuthController {
 
     private final ClienteService clienteService;
 
-//    @PostMapping("/register")
-//    public ResponseEntity<String> register(@RequestBody RegisterRequest registerRequest) {
-//        appUserService.registerUser(
-//                registerRequest.getUsername(),
-//                registerRequest.getPassword(),
-//                Set.of(Role.ROLE_USER) // Assegna il ruolo di default
-//        );
-//        return ResponseEntity.ok("Registrazione avvenuta con successo");
-//    }
+
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest) {

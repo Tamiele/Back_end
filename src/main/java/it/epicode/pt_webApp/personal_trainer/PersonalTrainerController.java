@@ -6,11 +6,13 @@ import it.epicode.pt_webApp.cliente.ClienteDTO;
 import it.epicode.pt_webApp.cliente.ClienteService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -25,6 +27,32 @@ public class PersonalTrainerController {
     private final ClienteService clienteService;
 
     private final PersonalTrainerService personalTrainerService;
+
+    private final PersonalTrainerRepository personalTrainerRepository;
+
+    @GetMapping("/me")
+    public ResponseEntity<PersonalTrainerDTO> getMe(Authentication authentication) {
+        String username = authentication.getName();
+        PersonalTrainerDTO personalTrainer = personalTrainerService.getPersonalTrainerDetails(username);
+        return ResponseEntity.ok(personalTrainer);
+    }
+
+
+    @PutMapping("/{id}")
+    public ResponseEntity<PersonalTrainer> updateProfile(
+            @PathVariable Long id,
+            @RequestBody PersonalTrainerDTO updateRequest) {
+
+        PersonalTrainer updatedTrainer = personalTrainerService.updateProfile(id, updateRequest);
+        return ResponseEntity.ok(updatedTrainer);
+    }
+
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deletePersonalTrainer(@PathVariable Long id) {
+        personalTrainerService.deletePersonalTrainer(id);
+        return ResponseEntity.ok("Personal Trainer eliminato con successo");
+    }
 
 
     //ricerca clienti per username e email
@@ -60,7 +88,7 @@ public class PersonalTrainerController {
             @PathVariable Long clientId,
             Principal principal
     ) {
-        String trainerUsername = principal.getName(); // Ottieni l'username del trainer loggato
+        String trainerUsername = principal.getName();
         personalTrainerService.assignClienteToTrainerByUsername(trainerUsername, clientId);
         return ResponseEntity.ok("Cliente assegnato al Personal Trainer con successo");
     }
@@ -71,7 +99,7 @@ public class PersonalTrainerController {
     public ResponseEntity<Page<ClienteDTO>> getMyClients(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            Principal principal // Ottieni il personal trainer loggato
+            Principal principal
     ) {
         String trainerUsername = principal.getName();
         Pageable pageable = PageRequest.of(page, size); // Configura la paginazione
@@ -98,9 +126,6 @@ public class PersonalTrainerController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-
-
-
 
 
 }
