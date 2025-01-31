@@ -23,6 +23,39 @@ public class ClienteService {
     private PasswordEncoder passwordEncoder;
 
 
+    //update cliente
+    public Cliente updateCliente(Long id, ClienteDTO clienteDTO) {
+        Cliente cliente = clienteRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cliente non trovato"));
+
+
+        if (!cliente.getUsername().equals(clienteDTO.getUsername()) &&
+                clienteRepository.existsByUsername(clienteDTO.getUsername())) {
+            throw new RuntimeException("Username già in uso, scegline un altro");
+        }
+
+        if (!cliente.getEmail().equals(clienteDTO.getEmail()) &&
+                clienteRepository.existsByEmail(clienteDTO.getEmail())) {
+            throw new RuntimeException("Email già in uso, scegline un'altra");
+        }
+        cliente.setUsername(clienteDTO.getUsername());
+        cliente.setEmail(clienteDTO.getEmail());
+        cliente.setNome(clienteDTO.getNome());
+        cliente.setCognome(clienteDTO.getCognome());
+        cliente.setDataDiNascita(clienteDTO.getDataDiNascita());
+
+        return clienteRepository.save(cliente);
+
+    }
+
+    //delete Cliente
+    public void deleteCliente(Long id) {
+        if (!clienteRepository.existsById(id)) {
+            throw new EntityNotFoundException("Personal Trainer non trovato");
+        }
+        clienteRepository.deleteById(id);
+    }
+
+
     public Optional<ClienteDTO> searchClientByUsername(String username) {
         return clienteRepository.findByUsername(username)
                 .map(cliente -> {

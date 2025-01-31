@@ -37,9 +37,9 @@ public class PersonalTrainerController {
     @PutMapping("/{id}")
     public ResponseEntity<PersonalTrainer> updateProfile(
             @PathVariable Long id,
-            @RequestBody PersonalTrainerDTO updateRequest) {
+            @RequestBody PersonalTrainerDTO personalTrainerDTO) {
 
-        PersonalTrainer updatedTrainer = personalTrainerService.updateProfile(id, updateRequest);
+        PersonalTrainer updatedTrainer = personalTrainerService.updateProfileTrainer(id, personalTrainerDTO);
         return ResponseEntity.ok(updatedTrainer);
     }
 
@@ -51,31 +51,7 @@ public class PersonalTrainerController {
     }
 
 
-    //ricerca clienti per username e email
-    @GetMapping("/search-client")
-    @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
-    public ResponseEntity<Object> searchClient(
-            @RequestParam(required = false) String username,
-            @RequestParam(required = false) String email
-    ) {
-        if (username != null) {
-            Optional<ClienteDTO> client = clienteService.searchClientByUsername(username);
-            if (client.isPresent()) {
-                return ResponseEntity.ok(client.get());
-            } else {
-                return ResponseEntity.status(404).body("Cliente non trovato con username: " + username);
-            }
-        } else if (email != null) {
-            Optional<ClienteDTO> client = clienteService.searchClientByEmail(email);
-            if (client.isPresent()) {
-                return ResponseEntity.ok(client.get());
-            } else {
-                return ResponseEntity.status(404).body("Cliente non trovato con email: " + email);
-            }
-        } else {
-            return ResponseEntity.badRequest().body("Devi fornire almeno un parametro: username o email");
-        }
-    }
+
 
 
     @PostMapping("/assign-client/{clientId}")

@@ -34,26 +34,26 @@ public class PersonalTrainerService {
 
 
     //metodo per modificare il profilo personalTrainer
-    public PersonalTrainer updateProfile(Long id, PersonalTrainerDTO updateRequest) {
+    public PersonalTrainer updateProfileTrainer(Long id, PersonalTrainerDTO personalTrainerDTO) {
         PersonalTrainer trainer = personalTrainerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Personal Trainer non trovato"));
+                .orElseThrow(() -> new EntityNotFoundException("Personal Trainer non trovato"));
 
 
-        if (!trainer.getUsername().equals(updateRequest.getUsername()) &&
-                personalTrainerRepository.existsByUsername(updateRequest.getUsername())) {
+        if (!trainer.getUsername().equals(personalTrainerDTO.getUsername()) &&
+                personalTrainerRepository.existsByUsername(personalTrainerDTO.getUsername())) {
             throw new RuntimeException("Username già in uso, scegline un altro");
         }
 
-        if (!trainer.getEmail().equals(updateRequest.getEmail()) &&
-                personalTrainerRepository.existsByEmail(updateRequest.getEmail())) {
+        if (!trainer.getEmail().equals(personalTrainerDTO.getEmail()) &&
+                personalTrainerRepository.existsByEmail(personalTrainerDTO.getEmail())) {
             throw new RuntimeException("Email già in uso, scegline un'altra");
         }
 
-        trainer.setUsername(updateRequest.getUsername());
-        trainer.setEmail(updateRequest.getEmail());
-        trainer.setNome(updateRequest.getNome());
-        trainer.setCognome(updateRequest.getCognome());
-        trainer.setDataDiNascita(updateRequest.getDataDiNascita());
+        trainer.setUsername(personalTrainerDTO.getUsername());
+        trainer.setEmail(personalTrainerDTO.getEmail());
+        trainer.setNome(personalTrainerDTO.getNome());
+        trainer.setCognome(personalTrainerDTO.getCognome());
+        trainer.setDataDiNascita(personalTrainerDTO.getDataDiNascita());
 
         return personalTrainerRepository.save(trainer);
     }

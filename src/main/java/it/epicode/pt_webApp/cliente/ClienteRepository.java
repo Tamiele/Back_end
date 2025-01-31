@@ -9,10 +9,12 @@ import java.util.Optional;
 
 public interface ClienteRepository extends JpaRepository<Cliente, Long> {
     boolean existsByUsername(String username);
+    boolean existsByEmail(String email);
 
     Optional<Cliente> findByUsername(String username);
 
     Optional<Cliente> findByEmail(String email);
 
     Page<Cliente> findAllByPersonalTrainerUsername(String username, Pageable pageable);
+
 }
