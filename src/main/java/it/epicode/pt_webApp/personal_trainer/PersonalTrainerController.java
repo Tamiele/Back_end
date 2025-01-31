@@ -13,13 +13,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.Optional;
 
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
-@RequestMapping("/api/personalTrainer")
+@RequestMapping("/api/trainer")
 @RequiredArgsConstructor
 public class PersonalTrainerController {
 
@@ -29,13 +32,6 @@ public class PersonalTrainerController {
     private final PersonalTrainerService personalTrainerService;
 
     private final PersonalTrainerRepository personalTrainerRepository;
-
-    @GetMapping("/me")
-    public ResponseEntity<PersonalTrainerDTO> getMe(Authentication authentication) {
-        String username = authentication.getName();
-        PersonalTrainerDTO personalTrainer = personalTrainerService.getPersonalTrainerDetails(username);
-        return ResponseEntity.ok(personalTrainer);
-    }
 
 
     @PutMapping("/{id}")
@@ -91,21 +87,6 @@ public class PersonalTrainerController {
         String trainerUsername = principal.getName();
         personalTrainerService.assignClienteToTrainerByUsername(trainerUsername, clientId);
         return ResponseEntity.ok("Cliente assegnato al Personal Trainer con successo");
-    }
-
-
-    @GetMapping("/my-clients")
-    @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
-    public ResponseEntity<Page<ClienteDTO>> getMyClients(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            Principal principal
-    ) {
-        String trainerUsername = principal.getName();
-        Pageable pageable = PageRequest.of(page, size); // Configura la paginazione
-
-        Page<ClienteDTO> clients = personalTrainerService.getAssignedClientsByTrainer(trainerUsername, pageable);
-        return ResponseEntity.ok(clients);
     }
 
 

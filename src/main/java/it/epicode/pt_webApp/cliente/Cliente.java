@@ -1,6 +1,7 @@
 package it.epicode.pt_webApp.cliente;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import it.epicode.pt_webApp.auth.AppUser;
 import it.epicode.pt_webApp.personal_trainer.PersonalTrainer;
 import jakarta.persistence.Entity;
@@ -21,6 +22,7 @@ public class Cliente extends AppUser {
     private LocalDate dataDiNascita;
 
     @ManyToOne
+
     @JoinColumn(name = "personal_trainer_id")
     private PersonalTrainer personalTrainer;
 }

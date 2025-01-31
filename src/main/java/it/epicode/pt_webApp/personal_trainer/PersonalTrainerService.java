@@ -32,46 +32,6 @@ public class PersonalTrainerService {
     @Autowired
     private ClienteRepository clienteRepository;
 
-    //registra un personalTrainer questo metodo lo richiamo nell'AuthController
-    public PersonalTrainer registerPersonalTrainer(String username, String password, String email, String nome, String cognome, LocalDate dataDiNascita) {
-        if (personalTrainerRepository.existsByUsername(username)) {
-            throw new EntityExistsException("Username già in uso");
-        }
-
-        PersonalTrainer personalTrainer = new PersonalTrainer();
-        personalTrainer.setUsername(username);
-        personalTrainer.setPassword(passwordEncoder.encode(password));
-        personalTrainer.setEmail(email);
-        personalTrainer.setNome(nome);
-        personalTrainer.setCognome(cognome);
-        personalTrainer.setDataDiNascita(dataDiNascita);
-        personalTrainer.setRoles(Set.of(Role.ROLE_PERSONAL_TRAINER));
-
-        return personalTrainerRepository.save(personalTrainer);
-    }
-
-    //get dei dati del personal loggato
-    public PersonalTrainerDTO getPersonalTrainerDetails(String username) {
-        PersonalTrainer trainer = personalTrainerRepository.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("Personal Trainer non trovato"));
-
-        // Converti il PersonalTrainer in DTO
-        PersonalTrainerDTO dto = new PersonalTrainerDTO();
-        BeanUtils.copyProperties(trainer, dto);
-
-        // Converti la lista dei clienti associati in DTO
-        List<ClienteDTO> clientiDTO = trainer.getClienti().stream()
-                .map(cliente -> {
-                    ClienteDTO clienteDTO = new ClienteDTO();
-                    BeanUtils.copyProperties(cliente, clienteDTO);
-                    return clienteDTO;
-                })
-                .collect(Collectors.toList());
-
-        dto.setClienti(clientiDTO);
-
-        return dto;
-    }
 
     //metodo per modificare il profilo personalTrainer
     public PersonalTrainer updateProfile(Long id, PersonalTrainerDTO updateRequest) {
@@ -122,7 +82,7 @@ public class PersonalTrainerService {
             throw new IllegalStateException("Il cliente è già assegnato a un altro Personal Trainer");
         }
 
-        // Assegna il cliente al trainer
+
         cliente.setPersonalTrainer(trainer);
         trainer.getClienti().add(cliente);
 
@@ -130,31 +90,8 @@ public class PersonalTrainerService {
         personalTrainerRepository.save(trainer);
     }
 
-    //metodo che restiutisce tutti i clienti di un personal trainer
-    public Page<ClienteDTO> getAssignedClientsByTrainer(String trainerUsername, Pageable pageable) {
 
-        PersonalTrainer trainer = personalTrainerRepository.findByUsername(trainerUsername)
-                .orElseThrow(() -> new EntityNotFoundException("Personal Trainer non trovato con username: " + trainerUsername));
-
-
-        Page<Cliente> clientsPage = clienteRepository.findAllByPersonalTrainer(trainer, pageable);
-
-
-        List<ClienteDTO> clientsDTO = clientsPage.getContent().stream().map(cliente -> {
-            ClienteDTO dto = new ClienteDTO();
-            dto.setId(cliente.getId());
-            dto.setUsername(cliente.getUsername());
-            dto.setEmail(cliente.getEmail());
-            dto.setNome(cliente.getNome());
-            dto.setCognome(cliente.getCognome());
-            dto.setDataDiNascita(cliente.getDataDiNascita());
-            return dto;
-        }).collect(Collectors.toList());
-
-        return new PageImpl<>(clientsDTO, pageable, clientsPage.getTotalElements());
-    }
-
-    //rimuove il cliente dal personal
+    //personal rimuove il cliente dai suoi preferiti
     @Transactional
     public void removeClientFromTrainer(String trainerUsername, Long clientId) {
 

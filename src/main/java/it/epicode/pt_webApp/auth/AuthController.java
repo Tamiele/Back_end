@@ -23,15 +23,16 @@ public class AuthController {
     private final ClienteService clienteService;
 
 
-
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest) {
-        String token = appUserService.authenticateUser(
+        AuthResponse authResponse = appUserService.authenticateUser(
                 loginRequest.getUsername(),
                 loginRequest.getPassword()
         );
-        return ResponseEntity.ok(new AuthResponse(token));
+
+        return ResponseEntity.ok(authResponse);
     }
+
 
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> register(@RequestBody RegisterRequest registerRequest) {
@@ -45,7 +46,7 @@ public class AuthController {
         // Verifica il ruolo e registra l'utente
         Map<String, String> response = new HashMap<>();
         if (registerRequest.getRoles().contains(Role.ROLE_USER)) {
-            clienteService.registerCliente(
+            appUserService.register(
                     registerRequest.getUsername(),
                     registerRequest.getPassword(),
                     registerRequest.getEmail(),
@@ -56,7 +57,7 @@ public class AuthController {
             response.put("message", "Cliente registrato con successo");
             return ResponseEntity.ok(response);
         } else if (registerRequest.getRoles().contains(Role.ROLE_PERSONAL_TRAINER)) {
-            personalTrainerService.registerPersonalTrainer(
+            appUserService.register(
                     registerRequest.getUsername(),
                     registerRequest.getPassword(),
                     registerRequest.getEmail(),

@@ -14,5 +14,5 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
 
     Optional<Cliente> findByEmail(String email);
 
-    Page<Cliente> findAllByPersonalTrainer(PersonalTrainer personalTrainer, Pageable pageable);
+    Page<Cliente> findAllByPersonalTrainerUsername(String username, Pageable pageable);
 }

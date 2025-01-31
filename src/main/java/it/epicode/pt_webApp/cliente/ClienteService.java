@@ -1,8 +1,12 @@
 package it.epicode.pt_webApp.cliente;
 
 import it.epicode.pt_webApp.auth.Role;
+import it.epicode.pt_webApp.personal_trainer.PersonalTrainer;
 import jakarta.persistence.EntityExistsException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -17,25 +21,6 @@ public class ClienteService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
-
-
-    //registra cliente
-    public Cliente registerCliente(String username, String password, String email, String nome, String cognome, LocalDate dataDiNascita) {
-        if (clienteRepository.existsByUsername(username)) {
-            throw new EntityExistsException("Username già in uso");
-        }
-
-        Cliente cliente = new Cliente();
-        cliente.setUsername(username);
-        cliente.setPassword(passwordEncoder.encode(password));
-        cliente.setEmail(email);
-        cliente.setNome(nome);
-        cliente.setCognome(cognome);
-        cliente.setDataDiNascita(dataDiNascita);
-        cliente.setRoles(Set.of(Role.ROLE_USER));
-
-        return clienteRepository.save(cliente);
-    }
 
 
     public Optional<ClienteDTO> searchClientByUsername(String username) {
@@ -64,6 +49,17 @@ public class ClienteService {
                     dto.setDataDiNascita(cliente.getDataDiNascita());
                     return dto;
                 });
+    }
+
+
+    //metodo che restiutisce tutti i clienti di un personal trainer
+    public Page<Cliente> getAssignedClientsByTrainer(String username, Pageable pageable) {
+
+        Page<Cliente> clienti = clienteRepository.findAllByPersonalTrainerUsername(username, pageable);
+
+        return clienti;
+
+
     }
 
 }

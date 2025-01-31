@@ -12,4 +12,5 @@ public class ClienteDTO {
     private String nome;
     private String cognome;
     private LocalDate dataDiNascita;
+    private int personalTrainerId;
 }
