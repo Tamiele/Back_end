@@ -13,6 +13,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 public class ExceptionHandlerClass extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(value = EntityNotFoundException.class)
+
     protected ResponseEntity<Object> entityNotFound(EntityNotFoundException ex) {
         return new ResponseEntity<>("Error: "+ex.getMessage(), HttpStatus.NOT_FOUND);
     }
