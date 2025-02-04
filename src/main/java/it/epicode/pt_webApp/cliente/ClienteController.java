@@ -50,7 +50,7 @@ public class ClienteController {
 
 
     //ricerca clienti per username e email
-    @GetMapping("/search-clients")
+    @GetMapping("/search-clients-byTrainer")
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
     public ResponseEntity<Object> searchClient(
             @RequestParam(required = false) String username,

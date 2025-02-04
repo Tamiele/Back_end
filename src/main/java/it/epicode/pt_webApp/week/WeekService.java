@@ -28,8 +28,7 @@ public class WeekService {
         WeekDTO dto = new WeekDTO();
         dto.setId(week.getId());
         dto.setWeekNumber(week.getWeekNumber());
-        // Puoi mappare i workout se vuoi
-        // dto.setWorkouts(week.getWorkouts().stream().map(workoutService::convertToDTO).collect(Collectors.toList()));
+
         return dto;
     }
 }

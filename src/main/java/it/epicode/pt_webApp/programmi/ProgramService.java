@@ -141,28 +141,22 @@ public class ProgramService {
 
     public Program assignProgramToClient(Long programId, Long clientId) {
         Program program = programRepository.findById(programId)
-                .orElseThrow(() -> new RuntimeException("Programma non trovato"));
+                .orElseThrow(() -> new EntityNotFoundException("Programma non trovato"));
         Cliente client = clienteRepository.findById(clientId)
-                .orElseThrow(() -> new RuntimeException("Cliente non trovato"));
+                .orElseThrow(() -> new EntityNotFoundException("Cliente non trovato"));
         if (program.getAssignedClients() == null) {
             program.setAssignedClients(new ArrayList<>());
         }
-        program.getAssignedClients().add(client);
+        if (!program.getAssignedClients().contains(client)) {
+            program.getAssignedClients().add(client);
+
+            program.setAssigned(true);
+        }
         return programRepository.save(program);
     }
 
 
-    // Metodo per recuperare i programmi assegnati ad un cliente
-    public List<Program> getProgramsByClient(Long clientId) {
-        return programRepository.findByAssignedClientsId(clientId);
-    }
 
-    public List<ProgramResponseDTO> getProgramsByClientDTO(Long clientId) {
-        List<Program> programs = programRepository.findByAssignedClientsId(clientId);
-        return programs.stream()
-                .map(program -> ProgramMapper.toDto(program, clientId))
-                .collect(Collectors.toList());
-    }
 
 
 

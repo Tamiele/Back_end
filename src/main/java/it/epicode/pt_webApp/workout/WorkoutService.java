@@ -28,8 +28,8 @@ public class WorkoutService {
         dto.setName(workout.getName());
         dto.setCompleted(workout.isCompleted());
         dto.setDayOfWeek(workout.getDayOfWeek());
-        // Se hai bisogno di mappare i workoutExercises:
-        // dto.setWorkoutExercises(workout.getWorkoutExercises().stream().map(this::convertWorkoutExerciseToDTO).collect(Collectors.toList()));
+
+
         return dto;
     }
 }

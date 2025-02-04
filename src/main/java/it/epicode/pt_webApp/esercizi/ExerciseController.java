@@ -4,6 +4,7 @@ package it.epicode.pt_webApp.esercizi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +19,7 @@ public class ExerciseController {
 
 
     // Crea un nuovo Exercise
+    @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
     @PostMapping
     public ResponseEntity<Exercise> createExercise(@RequestBody Exercise exercise) {
         Exercise createdExercise = exerciseService.createExercise(exercise);
@@ -25,6 +27,7 @@ public class ExerciseController {
     }
 
     // Recupera un Exercise per ID
+    @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
     @GetMapping("/{id}")
     public ResponseEntity<Exercise> getExercise(@PathVariable Long id) {
         Optional<Exercise> exerciseOpt = exerciseService.getExerciseById(id);
@@ -33,6 +36,7 @@ public class ExerciseController {
     }
 
     // Recupera tutti gli Exercise
+    @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
     @GetMapping
     public ResponseEntity<List<Exercise>> getAllExercises() {
         List<Exercise> exercises = exerciseService.getAllExercises();
@@ -40,6 +44,7 @@ public class ExerciseController {
     }
 
     // Aggiorna un Exercise esistente
+    @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
     @PutMapping("/{id}")
     public ResponseEntity<Exercise> updateExercise(@PathVariable Long id, @RequestBody Exercise exercise) {
         try {
@@ -51,6 +56,7 @@ public class ExerciseController {
     }
 
     // Cancella un Exercise
+    @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteExercise(@PathVariable Long id) {
         exerciseService.deleteExercise(id);

@@ -41,8 +41,7 @@ public class WorkoutExerciseService {
         dto.setRestType(we.getRestType());
         dto.setRestValue(we.getRestValue());
         dto.setWeight(we.getWeight());
-        // Mappa anche l'Exercise se necessario:
-        // dto.setExercise(exerciseMapper.convertToDTO(we.getExercise()));
+
         return dto;
     }
 }

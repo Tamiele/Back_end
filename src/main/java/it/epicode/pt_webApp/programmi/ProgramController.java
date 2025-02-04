@@ -124,7 +124,7 @@ public class ProgramController {
 
 
     @PreAuthorize("hasRole('ROLE_USER')")
-    @GetMapping("/client/{clientId}")
+    @GetMapping("/client")
     public ResponseEntity<List<ProgramResponseDTO>> getProgramsByClient(@PathVariable Long clientId) {
 
         List<Program> programs = programRepository.findByAssignedClientsId(clientId);

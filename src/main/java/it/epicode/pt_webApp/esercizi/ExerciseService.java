@@ -53,8 +53,5 @@ public class ExerciseService {
         return exerciseRepository.findAll();
     }
 
-    // Metodo custom per cercare un Exercise per nome
-    public Optional<Exercise> getExerciseByName(String name) {
-        return exerciseRepository.findByName(name);
-    }
+
 }
