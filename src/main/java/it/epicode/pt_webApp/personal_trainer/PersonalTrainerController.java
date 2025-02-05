@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @CrossOrigin(origins = "http://localhost:4200")
@@ -80,21 +82,26 @@ public class PersonalTrainerController {
 
     @DeleteMapping("/remove-client/{clientId}")
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
-    public ResponseEntity<String> removeClient(
+    public ResponseEntity<Map<String, String>> removeClient(
             @PathVariable Long clientId,
             Principal principal
     ) {
         String trainerUsername = principal.getName();
+        Map<String, String> response = new HashMap<>();
 
         try {
             personalTrainerService.removeClientFromTrainer(trainerUsername, clientId);
-            return ResponseEntity.ok("Cliente rimosso con successo dalla lista dei propri clienti");
+            response.put("message", "Cliente rimosso con successo dalla lista dei propri clienti");
+            return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(404).body(e.getMessage());
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(404).body(response);
         } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
     }
+
 
 
 }
