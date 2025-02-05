@@ -74,18 +74,6 @@ public class ProgramController {
     }
 
 
-    @GetMapping("/trainer")
-    @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
-    public ResponseEntity<List<Program>> getProgramsByLoggedTrainer(@AuthenticationPrincipal UserDetails userDetails) {
-
-        String username = userDetails.getUsername();
-
-        PersonalTrainer trainer = personalTrainerRepository.findByUsername(username)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Personal Trainer non trovato"));
-
-        List<Program> programs = programService.getProgramsByPersonalTrainer(trainer.getId());
-        return ResponseEntity.ok(programs);
-    }
 
 
     // Aggiorna un Program esistente
@@ -141,9 +129,7 @@ public class ProgramController {
         PersonalTrainer trainer = personalTrainerRepository.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Personal Trainer non trovato"));
 
-        // Ottieni tutti i programmi creati dal personal trainer loggato
-        List<Program> programs = programService.getProgramsByPersonalTrainer(trainer.getId());
-
+        List<Program> programs = programRepository.findByPersonalTrainerId(trainer.getId());
 
         List<ProgramResponseDTO> dtoList = programs.stream()
                 .map(program -> programService.getProgramStructure(program.getId()))

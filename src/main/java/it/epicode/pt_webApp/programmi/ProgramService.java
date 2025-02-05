@@ -52,10 +52,6 @@ public class ProgramService {
         return programRepository.findById(id);
     }
 
-    // Recupera tutti i Program associati ad un determinato PersonalTrainer
-    public List<Program> getProgramsByPersonalTrainer(Long personalTrainerId) {
-        return programRepository.findByPersonalTrainerId(personalTrainerId);
-    }
 
     // Aggiorna un Program esistente
     public Program updateProgram(Long id, Program newProgram) {
