@@ -5,11 +5,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
@@ -21,29 +23,51 @@ public class ClienteController {
     @Autowired
     private ClienteService clienteService;
 
+    @Autowired
+    private ClienteRepository clienteRepository;
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Cliente> updateProfile(@PathVariable Long id, @RequestBody ClienteDTO clienteDTO) {
-        Cliente updateCliente = clienteService.updateCliente(id, clienteDTO);
-        return ResponseEntity.ok(updateCliente);
+    @PutMapping
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<Cliente> updateLoggedClient(@AuthenticationPrincipal UserDetails userDetails,
+                                                      @RequestBody ClienteDTO clienteDTO) {
+
+        String username = userDetails.getUsername();
+
+
+        Cliente cliente = clienteRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente non trovato"));
+
+
+        Cliente updatedCliente = clienteService.updateCliente(cliente.getId(), clienteDTO);
+
+        return ResponseEntity.ok(updatedCliente);
     }
 
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deletePersonalTrainer(@PathVariable Long id) {
-        clienteService.deleteCliente(id);
-        return ResponseEntity.ok("Cliente eliminato con successo");
+    @DeleteMapping
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<String> deleteLoggedClient(@AuthenticationPrincipal UserDetails userDetails) {
+
+        String username = userDetails.getUsername();
+
+
+        Cliente cliente = clienteRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente non trovato"));
+
+
+        clienteService.deleteCliente(cliente.getId());
+
+        return ResponseEntity.ok("Il tuo account è stato eliminato con successo.");
     }
 
 
-    @GetMapping
+    @GetMapping("/myClient")
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
     public ResponseEntity<Page<Cliente>> getMyClients(
 
             @AuthenticationPrincipal UserDetails user, Pageable pageable
 
     ) {
-
         Page<Cliente> clients = clienteService.getAssignedClientsByTrainer(user.getUsername(), pageable);
         return ResponseEntity.ok(clients);
     }

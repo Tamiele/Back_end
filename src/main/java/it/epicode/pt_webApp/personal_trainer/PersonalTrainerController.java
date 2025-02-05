@@ -10,12 +10,14 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
 import java.util.Optional;
@@ -34,24 +36,34 @@ public class PersonalTrainerController {
     private final PersonalTrainerRepository personalTrainerRepository;
 
 
-    @PutMapping("/{id}")
-    public ResponseEntity<PersonalTrainer> updateProfile(
-            @PathVariable Long id,
+    @PutMapping("/update")
+    @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
+    public ResponseEntity<PersonalTrainer> updateLoggedTrainer(
+            @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody PersonalTrainerDTO personalTrainerDTO) {
 
-        PersonalTrainer updatedTrainer = personalTrainerService.updateProfileTrainer(id, personalTrainerDTO);
+        String username = userDetails.getUsername();
+
+        PersonalTrainer trainer = personalTrainerRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Personal Trainer non trovato"));
+
+        PersonalTrainer updatedTrainer = personalTrainerService.updateProfileTrainer(trainer.getId(), personalTrainerDTO);
         return ResponseEntity.ok(updatedTrainer);
     }
 
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deletePersonalTrainer(@PathVariable Long id) {
-        personalTrainerService.deletePersonalTrainer(id);
-        return ResponseEntity.ok("Personal Trainer eliminato con successo");
+    @DeleteMapping("/delete")
+    @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
+    public ResponseEntity<String> deleteLoggedTrainer(@AuthenticationPrincipal UserDetails userDetails) {
+
+        String username = userDetails.getUsername();
+
+        PersonalTrainer trainer = personalTrainerRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Personal Trainer non trovato"));
+
+        personalTrainerService.deletePersonalTrainer(trainer.getId());
+        return ResponseEntity.ok("Il tuo account da Personal Trainer è stato eliminato con successo.");
     }
-
-
-
 
 
     @PostMapping("/assign-client/{clientId}")
@@ -70,7 +82,7 @@ public class PersonalTrainerController {
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
     public ResponseEntity<String> removeClient(
             @PathVariable Long clientId,
-            Principal principal // Ottieni il personal trainer loggato
+            Principal principal
     ) {
         String trainerUsername = principal.getName();
 

@@ -1,4 +1,6 @@
 package it.epicode.pt_webApp.programmi;
+import it.epicode.pt_webApp.cliente.Cliente;
+import it.epicode.pt_webApp.cliente.ClienteRepository;
 import it.epicode.pt_webApp.personal_trainer.PersonalTrainerDTO;
 import it.epicode.pt_webApp.personal_trainer.PersonalTrainerRepository;
 
@@ -11,10 +13,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +37,9 @@ public class ProgramController {
 
     @Autowired
     private ProgramRepository programRepository;
+
+    @Autowired
+    private ClienteRepository clienteRepository;
 
 
     // Crea un nuovo Programma
@@ -125,14 +133,23 @@ public class ProgramController {
 
     @PreAuthorize("hasRole('ROLE_USER')")
     @GetMapping("/client")
-    public ResponseEntity<List<ProgramResponseDTO>> getProgramsByClient(@PathVariable Long clientId) {
+    public ResponseEntity<List<ProgramResponseDTO>> getProgramsByLoggedClient(@AuthenticationPrincipal UserDetails userDetails) {
+
+        String username = userDetails.getUsername();
+
+        Cliente cliente = clienteRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente non trovato"));
+
+        Long clientId = cliente.getId();
 
         List<Program> programs = programRepository.findByAssignedClientsId(clientId);
         List<ProgramResponseDTO> dtoList = programs.stream()
                 .map(program -> ProgramMapper.toDto(program, clientId))
                 .collect(Collectors.toList());
+
         return ResponseEntity.ok(dtoList);
     }
+
 
 
 

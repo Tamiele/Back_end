@@ -77,11 +77,11 @@ public class ProgramService {
 
 
     public ProgramResponseDTO getProgramStructure(Long programId) {
-        // 1. Recupera il Program di base
+
         Program program = programRepository.findById(programId)
                 .orElseThrow(() -> new RuntimeException("Programma non trovato"));
 
-        // 2. Mappa i dati base nel DTO
+
         ProgramResponseDTO dto = new ProgramResponseDTO();
         dto.setId(program.getId());
         dto.setName(program.getName());
@@ -89,14 +89,14 @@ public class ProgramService {
         dto.setTemplate(program.isTemplate());
         dto.setAssigned(program.isAssigned());
 
-        // 3. Recupera le Week per questo Program
+
         List<Week> weeks = weekRepository.findByProgramId(programId);
         List<WeekDTO> weekDTOs = weeks.stream().map(week -> {
             WeekDTO weekDTO = new WeekDTO();
             weekDTO.setId(week.getId());
             weekDTO.setWeekNumber(week.getWeekNumber());
 
-            // 4. Per ogni Week, recupera i Workout
+
             List<Workout> workouts = workoutRepository.findByWeekId(week.getId());
             List<WorkoutDTO> workoutDTOs = workouts.stream().map(workout -> {
                 WorkoutDTO workoutDTO = new WorkoutDTO();
@@ -105,7 +105,7 @@ public class ProgramService {
                 workoutDTO.setCompleted(workout.isCompleted());
                 workoutDTO.setDayOfWeek(workout.getDayOfWeek());
 
-                // 5. Per ogni Workout, recupera i WorkoutExercise (cioè gli esercizi)
+
                 List<WorkoutExercise> workoutExercises = workoutExerciseRepository.findByWorkoutId(workout.getId());
                 List<WorkoutExerciseDTO> exerciseDTOs = workoutExercises.stream().map(we -> {
                     WorkoutExerciseDTO weDTO = new WorkoutExerciseDTO();
@@ -115,7 +115,7 @@ public class ProgramService {
                     weDTO.setRestType(we.getRestType());
                     weDTO.setRestValue(we.getRestValue());
                     weDTO.setWeight(we.getWeight());
-                    // Mappa anche l'esercizio
+
                     if (we.getExercise() != null) {
                         ExerciseDTO exDTO = new ExerciseDTO();
                         exDTO.setId(we.getExercise().getId());
