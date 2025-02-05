@@ -1,4 +1,5 @@
 package it.epicode.pt_webApp.programmi;
+
 import it.epicode.pt_webApp.cliente.Cliente;
 import it.epicode.pt_webApp.cliente.ClienteRepository;
 import it.epicode.pt_webApp.personal_trainer.PersonalTrainerDTO;
@@ -30,10 +31,10 @@ import java.util.stream.Collectors;
 public class ProgramController {
 
     @Autowired
-    private  ProgramService programService;
+    private ProgramService programService;
 
     @Autowired
-    private  PersonalTrainerRepository personalTrainerRepository;
+    private PersonalTrainerRepository personalTrainerRepository;
 
     @Autowired
     private ProgramRepository programRepository;
@@ -73,58 +74,102 @@ public class ProgramController {
     }
 
 
+    @GetMapping("/trainer")
+    @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
+    public ResponseEntity<List<Program>> getProgramsByLoggedTrainer(@AuthenticationPrincipal UserDetails userDetails) {
 
+        String username = userDetails.getUsername();
 
+        PersonalTrainer trainer = personalTrainerRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Personal Trainer non trovato"));
 
-    // Recupera un Program tramite il suo id
-    @GetMapping("/{id}")
-    public ResponseEntity<Program> getProgramById(@PathVariable Long id) {
-        Optional<Program> programOptional = programService.getProgramById(id);
-        return programOptional.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    // Recupera tutti i Program associati ad un determinato PersonalTrainer
-    // L'endpoint è stato aggiornato per utilizzare il trainerId
-    @GetMapping("/trainer/{trainerId}")
-    public ResponseEntity<List<Program>> getProgramsByTrainer(@PathVariable Long trainerId) {
-        List<Program> programs = programService.getProgramsByPersonalTrainer(trainerId);
+        List<Program> programs = programService.getProgramsByPersonalTrainer(trainer.getId());
         return ResponseEntity.ok(programs);
     }
+
 
     // Aggiorna un Program esistente
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
     @PutMapping("/{id}")
-    public ResponseEntity<Program> updateProgram(@PathVariable Long id, @RequestBody Program program) {
-        try {
-            Program updatedProgram = programService.updateProgram(id, program);
-            return ResponseEntity.ok(updatedProgram);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<Program> updateProgram(
+            @PathVariable Long id,
+            @RequestBody Program program,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        String username = userDetails.getUsername();
+
+        Program existingProgram = programService.getProgramById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Programma non trovato"));
+
+
+        if (!existingProgram.getPersonalTrainer().getUsername().equals(username)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Non hai il permesso di modificare questo programma.");
         }
+
+        Program updatedProgram = programService.updateProgram(id, program);
+        return ResponseEntity.ok(updatedProgram);
     }
+
 
     // Elimina un Program
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProgram(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteProgram(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
+        String username = userDetails.getUsername();
+
+
+        Program existingProgram = programService.getProgramById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Programma non trovato"));
+
+
+        if (!existingProgram.getPersonalTrainer().getUsername().equals(username)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Non hai il permesso di eliminare questo programma.");
+        }
+
         programService.deleteProgram(id);
         return ResponseEntity.noContent().build();
     }
 
+
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
-    @GetMapping("/{programId}/structure")
-    public ResponseEntity<ProgramResponseDTO> getProgramStructure(@PathVariable Long programId) {
-        ProgramResponseDTO structureDTO = programService.getProgramStructure(programId);
-        return ResponseEntity.ok(structureDTO);
+    @GetMapping("/my-programs")
+    public ResponseEntity<List<ProgramResponseDTO>> getMyPrograms(@AuthenticationPrincipal UserDetails userDetails) {
+
+        String username = userDetails.getUsername();
+
+
+        PersonalTrainer trainer = personalTrainerRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Personal Trainer non trovato"));
+
+        // Ottieni tutti i programmi creati dal personal trainer loggato
+        List<Program> programs = programService.getProgramsByPersonalTrainer(trainer.getId());
+
+
+        List<ProgramResponseDTO> dtoList = programs.stream()
+                .map(program -> programService.getProgramStructure(program.getId()))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtoList);
     }
+
 
 
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
     @PostMapping("/{programId}/assign/{clientId}")
     public ResponseEntity<ProgramResponseDTO> assignProgramToClient(
             @PathVariable Long programId,
-            @PathVariable Long clientId) {
+            @PathVariable Long clientId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        String username = userDetails.getUsername();
+
+        Program existingProgram = programService.getProgramById(programId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Programma non trovato"));
+
+        if (!existingProgram.getPersonalTrainer().getUsername().equals(username)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Non puoi assegnare questo programma.");
+        }
+
         Program program = programService.assignProgramToClient(programId, clientId);
         ProgramResponseDTO dto = programService.getProgramStructure(program.getId());
         return ResponseEntity.ok(dto);
@@ -149,9 +194,6 @@ public class ProgramController {
 
         return ResponseEntity.ok(dtoList);
     }
-
-
-
 
 
 }
