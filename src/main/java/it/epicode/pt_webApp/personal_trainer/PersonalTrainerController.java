@@ -76,7 +76,7 @@ public class PersonalTrainerController {
     ) {
         String trainerUsername = principal.getName();
         personalTrainerService.assignClienteToTrainerByUsername(trainerUsername, clientId);
-        return ResponseEntity.ok("Cliente assegnato al Personal Trainer con successo");
+        return ResponseEntity.ok().build();
     }
 
 

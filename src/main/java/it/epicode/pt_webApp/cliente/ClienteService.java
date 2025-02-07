@@ -57,7 +57,7 @@ public class ClienteService {
 
 
     public Optional<ClienteDTO> searchClientByUsername(String username) {
-        return clienteRepository.findByUsername(username)
+        return clienteRepository.findAvailableByUsername(username) // Usa la nuova query
                 .map(cliente -> {
                     ClienteDTO dto = new ClienteDTO();
                     dto.setId(cliente.getId());
@@ -71,7 +71,7 @@ public class ClienteService {
     }
 
     public Optional<ClienteDTO> searchClientByEmail(String email) {
-        return clienteRepository.findByEmail(email)
+        return clienteRepository.findAvailableByEmail(email) // Usa la nuova query
                 .map(cliente -> {
                     ClienteDTO dto = new ClienteDTO();
                     dto.setId(cliente.getId());
@@ -83,6 +83,8 @@ public class ClienteService {
                     return dto;
                 });
     }
+
+
 
 
     //metodo che restiutisce tutti i clienti di un personal trainer

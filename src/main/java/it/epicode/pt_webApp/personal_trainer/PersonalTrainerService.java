@@ -68,27 +68,28 @@ public class PersonalTrainerService {
 
 
     //metodo per aggiungere un cliente ad un personal trainer
+    @Transactional
     public void assignClienteToTrainerByUsername(String trainerUsername, Long clienteId) {
 
         PersonalTrainer trainer = personalTrainerRepository.findByUsername(trainerUsername)
                 .orElseThrow(() -> new EntityNotFoundException("Personal Trainer non trovato con username: " + trainerUsername));
 
-
         Cliente cliente = clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new EntityNotFoundException("Cliente non trovato con ID: " + clienteId));
-
 
         if (cliente.getPersonalTrainer() != null) {
             throw new IllegalStateException("Il cliente è già assegnato a un altro Personal Trainer");
         }
 
-
+        // Assegna il cliente al trainer
         cliente.setPersonalTrainer(trainer);
         trainer.getClienti().add(cliente);
 
-
+        // Salva entrambi per aggiornare il database
+        clienteRepository.save(cliente); // 🔹 IMPORTANTE: salva il cliente
         personalTrainerRepository.save(trainer);
     }
+
 
 
     //personal rimuove il cliente dai suoi preferiti

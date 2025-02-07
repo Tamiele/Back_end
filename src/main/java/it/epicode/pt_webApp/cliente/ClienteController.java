@@ -76,26 +76,21 @@ public class ClienteController {
     //ricerca clienti per username e email
     @GetMapping("/search-clients-byTrainer")
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
-    public ResponseEntity<Object> searchClient(
+    public ResponseEntity<?> searchClient(
             @RequestParam(required = false) String username,
             @RequestParam(required = false) String email
     ) {
         if (username != null) {
             Optional<ClienteDTO> client = clienteService.searchClientByUsername(username);
-            if (client.isPresent()) {
-                return ResponseEntity.ok(client.get());
-            } else {
-                return ResponseEntity.status(404).body("Cliente non trovato con username: " + username);
-            }
+            return client.<ResponseEntity<?>>map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.status(404).body("Il Cliente" + "" + username + "" + "è gia assegnato ad un altro Personal Trainer"));
         } else if (email != null) {
             Optional<ClienteDTO> client = clienteService.searchClientByEmail(email);
-            if (client.isPresent()) {
-                return ResponseEntity.ok(client.get());
-            } else {
-                return ResponseEntity.status(404).body("Cliente non trovato con email: " + email);
-            }
+            return client.<ResponseEntity<?>>map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.status(404).body("Il Cliente con e-mail:" + "" + email + "" + " è gia assegnato ad un altro Personal Trainer"));
         } else {
             return ResponseEntity.badRequest().body("Devi fornire almeno un parametro: username o email");
         }
     }
+
 }
