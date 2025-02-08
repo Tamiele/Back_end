@@ -11,9 +11,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -33,27 +40,29 @@ public class PersonalTrainerService {
     private ClienteRepository clienteRepository;
 
 
+
+
     //metodo per modificare il profilo personalTrainer
-    public PersonalTrainer updateProfileTrainer(Long id, PersonalTrainerDTO personalTrainerDTO) {
+    public PersonalTrainer updateProfileTrainer(Long id, PersonalTrainer personalTrainer) {
         PersonalTrainer trainer = personalTrainerRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Personal Trainer non trovato"));
 
 
-        if (!trainer.getUsername().equals(personalTrainerDTO.getUsername()) &&
-                personalTrainerRepository.existsByUsername(personalTrainerDTO.getUsername())) {
+        if (!trainer.getUsername().equals(personalTrainer.getUsername()) &&
+                personalTrainerRepository.existsByUsername(personalTrainer.getUsername())) {
             throw new RuntimeException("Username già in uso, scegline un altro");
         }
 
-        if (!trainer.getEmail().equals(personalTrainerDTO.getEmail()) &&
-                personalTrainerRepository.existsByEmail(personalTrainerDTO.getEmail())) {
+        if (!trainer.getEmail().equals(personalTrainer.getEmail()) &&
+                personalTrainerRepository.existsByEmail(personalTrainer.getEmail())) {
             throw new RuntimeException("Email già in uso, scegline un'altra");
         }
 
-        trainer.setUsername(personalTrainerDTO.getUsername());
-        trainer.setEmail(personalTrainerDTO.getEmail());
-        trainer.setNome(personalTrainerDTO.getNome());
-        trainer.setCognome(personalTrainerDTO.getCognome());
-        trainer.setDataDiNascita(personalTrainerDTO.getDataDiNascita());
+        trainer.setUsername(personalTrainer.getUsername());
+        trainer.setEmail(personalTrainer.getEmail());
+        trainer.setNome(personalTrainer.getNome());
+        trainer.setCognome(personalTrainer.getCognome());
+        trainer.setDataDiNascita(personalTrainer.getDataDiNascita());
 
         return personalTrainerRepository.save(trainer);
     }
@@ -89,7 +98,6 @@ public class PersonalTrainerService {
         clienteRepository.save(cliente); // 🔹 IMPORTANTE: salva il cliente
         personalTrainerRepository.save(trainer);
     }
-
 
 
     //personal rimuove il cliente dai suoi preferiti

@@ -38,19 +38,47 @@ public class PersonalTrainerController {
     private final PersonalTrainerRepository personalTrainerRepository;
 
 
-    @PutMapping("/update")
+    @GetMapping
+    @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
+    public ResponseEntity<PersonalTrainer> getLoggedTrainerProfile(@AuthenticationPrincipal UserDetails userDetails) {
+        String username = userDetails.getUsername();
+
+        PersonalTrainer trainer = personalTrainerRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("Personal Trainer non trovato"));
+
+        return ResponseEntity.ok(trainer);
+    }
+
+
+    @PutMapping
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
     public ResponseEntity<PersonalTrainer> updateLoggedTrainer(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody PersonalTrainerDTO personalTrainerDTO) {
+            @RequestBody PersonalTrainer personalTrainer) {
 
         String username = userDetails.getUsername();
 
         PersonalTrainer trainer = personalTrainerRepository.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Personal Trainer non trovato"));
 
-        PersonalTrainer updatedTrainer = personalTrainerService.updateProfileTrainer(trainer.getId(), personalTrainerDTO);
-        return ResponseEntity.ok(updatedTrainer);
+
+        if (personalTrainer.getUsername() != null && !trainer.getUsername().equals(personalTrainer.getUsername()) &&
+                personalTrainerRepository.existsByUsername(personalTrainer.getUsername())) {
+            throw new RuntimeException("Username già in uso, scegline un altro");
+        }
+
+        if (personalTrainer.getEmail() != null && !trainer.getEmail().equals(personalTrainer.getEmail()) &&
+                personalTrainerRepository.existsByEmail(personalTrainer.getEmail())) {
+            throw new RuntimeException("Email già in uso, scegline un'altra");
+        }
+
+        if (personalTrainer.getUsername() != null) trainer.setUsername(personalTrainer.getUsername());
+        if (personalTrainer.getEmail() != null) trainer.setEmail(personalTrainer.getEmail());
+        if (personalTrainer.getNome() != null) trainer.setNome(personalTrainer.getNome());
+        if (personalTrainer.getCognome() != null) trainer.setCognome(personalTrainer.getCognome());
+        if (personalTrainer.getDataDiNascita() != null) trainer.setDataDiNascita(personalTrainer.getDataDiNascita());
+
+        return ResponseEntity.ok(personalTrainerRepository.save(trainer));
     }
 
 
@@ -101,7 +129,6 @@ public class PersonalTrainerController {
             return ResponseEntity.badRequest().body(response);
         }
     }
-
 
 
 }
