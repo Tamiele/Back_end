@@ -58,7 +58,6 @@ public class ProgramController {
         PersonalTrainer trainer = personalTrainerRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Personal Trainer non trovato per username: " + username));
 
-
         Program program = new Program();
         program.setName(requestDTO.getName());
         program.setDescription(requestDTO.getDescription());
@@ -67,13 +66,10 @@ public class ProgramController {
         program.setPersonalTrainer(trainer);
 
         Program savedProgram = programService.createProgram(program);
-
         ProgramResponseDTO responseDTO = ProgramMapper.toDto(savedProgram);
 
         return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
     }
-
-
 
 
     // Aggiorna un Program esistente
@@ -137,7 +133,6 @@ public class ProgramController {
 
         return ResponseEntity.ok(dtoList);
     }
-
 
 
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")

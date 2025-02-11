@@ -84,7 +84,7 @@ public class PersonalTrainerController {
 
     @DeleteMapping("/delete")
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
-    public ResponseEntity<String> deleteLoggedTrainer(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<Map<String, String>> deleteLoggedTrainer(@AuthenticationPrincipal UserDetails userDetails) {
 
         String username = userDetails.getUsername();
 
@@ -92,7 +92,9 @@ public class PersonalTrainerController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Personal Trainer non trovato"));
 
         personalTrainerService.deletePersonalTrainer(trainer.getId());
-        return ResponseEntity.ok("Il tuo account da Personal Trainer è stato eliminato con successo.");
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Il tuo account da Personal Trainer è stato eliminato con successo.");
+        return ResponseEntity.ok(response);
     }
 
 

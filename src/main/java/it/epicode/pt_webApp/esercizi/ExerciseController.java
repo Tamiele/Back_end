@@ -1,6 +1,5 @@
 package it.epicode.pt_webApp.esercizi;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +16,7 @@ public class ExerciseController {
     @Autowired
     private ExerciseService exerciseService;
 
-
-    // Crea un nuovo Exercise
+    // Crea un nuovo esercizio
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
     @PostMapping
     public ResponseEntity<Exercise> createExercise(@RequestBody Exercise exercise) {
@@ -26,7 +24,7 @@ public class ExerciseController {
         return new ResponseEntity<>(createdExercise, HttpStatus.CREATED);
     }
 
-    // Recupera un Exercise per ID
+    // Recupera un esercizio per ID
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
     @GetMapping("/{id}")
     public ResponseEntity<Exercise> getExercise(@PathVariable Long id) {
@@ -35,15 +33,20 @@ public class ExerciseController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Recupera tutti gli Exercise
+    // Recupera tutti gli esercizi oppure filtra per gruppo muscolare
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
     @GetMapping
-    public ResponseEntity<List<Exercise>> getAllExercises() {
-        List<Exercise> exercises = exerciseService.getAllExercises();
+    public ResponseEntity<List<Exercise>> getExercises(@RequestParam(required = false) String muscleGroup) {
+        List<Exercise> exercises;
+        if (muscleGroup != null && !muscleGroup.trim().isEmpty()) {
+            exercises = exerciseService.getExercisesByMuscleGroup(muscleGroup);
+        } else {
+            exercises = exerciseService.getAllExercises();
+        }
         return ResponseEntity.ok(exercises);
     }
 
-    // Aggiorna un Exercise esistente
+    // Aggiorna un esercizio esistente
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
     @PutMapping("/{id}")
     public ResponseEntity<Exercise> updateExercise(@PathVariable Long id, @RequestBody Exercise exercise) {
@@ -55,7 +58,7 @@ public class ExerciseController {
         }
     }
 
-    // Cancella un Exercise
+    // Cancella un esercizio
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteExercise(@PathVariable Long id) {

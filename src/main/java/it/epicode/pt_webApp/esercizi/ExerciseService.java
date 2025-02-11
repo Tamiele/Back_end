@@ -13,7 +13,7 @@ import java.util.Optional;
 public class ExerciseService {
 
     @Autowired
-    private  ExerciseRepository exerciseRepository;
+    private ExerciseRepository exerciseRepository;
 
 
     // Crea un nuovo Exercise
@@ -51,6 +51,10 @@ public class ExerciseService {
     // Recupera tutti gli Exercise
     public List<Exercise> getAllExercises() {
         return exerciseRepository.findAll();
+    }
+
+    public List<Exercise> getExercisesByMuscleGroup(String muscleGroup) {
+        return exerciseRepository.findByMuscleGroupIgnoreCase(muscleGroup);
     }
 
 
