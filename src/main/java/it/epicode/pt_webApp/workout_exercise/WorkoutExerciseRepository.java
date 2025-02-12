@@ -10,4 +10,5 @@ public interface WorkoutExerciseRepository extends JpaRepository<WorkoutExercise
 
     List<WorkoutExercise> findByWorkoutId(Long workoutId);
 
+    void deleteByWorkoutId(Long id);
 }

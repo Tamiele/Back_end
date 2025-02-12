@@ -10,6 +10,9 @@ import it.epicode.pt_webApp.week.WeekDTO;
 import it.epicode.pt_webApp.workout.WorkoutDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -97,41 +100,33 @@ public class ProgramController {
 
     // Elimina un Program
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProgram(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
-        String username = userDetails.getUsername();
-
-
-        Program existingProgram = programService.getProgramById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Programma non trovato"));
-
-
-        if (!existingProgram.getPersonalTrainer().getUsername().equals(username)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Non hai il permesso di eliminare questo programma.");
-        }
-
-        programService.deleteProgram(id);
+    @DeleteMapping("/{programId}")
+    public ResponseEntity<Void> deleteProgram(@PathVariable Long programId) {
+        programService.deleteProgram(programId);
         return ResponseEntity.noContent().build();
     }
 
 
+
+
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
     @GetMapping("/my-programs")
-    public ResponseEntity<List<ProgramResponseDTO>> getMyPrograms(@AuthenticationPrincipal UserDetails userDetails) {
-
+    public ResponseEntity<Page<ProgramResponseDTO>> getMyPrograms(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(defaultValue = "0") int page,  // Pagina predefinita: 0
+            @RequestParam(defaultValue = "5") int size  // Dimensione predefinita: 5
+    ) {
         String username = userDetails.getUsername();
-
 
         PersonalTrainer trainer = personalTrainerRepository.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Personal Trainer non trovato"));
 
-        List<Program> programs = programRepository.findByPersonalTrainerId(trainer.getId());
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Program> programPage = programRepository.findByPersonalTrainerId(trainer.getId(), pageable);
 
-        List<ProgramResponseDTO> dtoList = programs.stream()
-                .map(program -> programService.getProgramStructure(program.getId()))
-                .collect(Collectors.toList());
+        Page<ProgramResponseDTO> dtoPage = programPage.map(programService::getProgramStructure);
 
-        return ResponseEntity.ok(dtoList);
+        return ResponseEntity.ok(dtoPage);
     }
 
 
@@ -152,7 +147,7 @@ public class ProgramController {
         }
 
         Program program = programService.assignProgramToClient(programId, clientId);
-        ProgramResponseDTO dto = programService.getProgramStructure(program.getId());
+        ProgramResponseDTO dto = programService.getProgramStructure(program);
         return ResponseEntity.ok(dto);
     }
 

@@ -15,6 +15,9 @@ import it.epicode.pt_webApp.workout_exercise.WorkoutExerciseRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,17 +70,39 @@ public class ProgramService {
     }
 
     // Elimina un Program per id
-    public void deleteProgram(Long id) {
-        programRepository.deleteById(id);
+    @Transactional
+    public void deleteProgram(Long programId) {
+        Program program = programRepository.findById(programId)
+                .orElseThrow(() -> new EntityNotFoundException("Programma non trovato"));
+
+
+        List<Week> weeks = weekRepository.findByProgramId(programId);
+        for (Week week : weeks) {
+
+            List<Workout> workouts = workoutRepository.findByWeekId(week.getId());
+            for (Workout workout : workouts) {
+
+                workoutExerciseRepository.deleteByWorkoutId(workout.getId());
+                workoutRepository.delete(workout);
+            }
+            weekRepository.delete(week);
+        }
+
+
+        programRepository.delete(program);
+    }
+
+    public Page<ProgramResponseDTO> getMyPrograms(Long trainerId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Program> programPage = programRepository.findByPersonalTrainerId(trainerId, pageable);
+        return programPage.map(this::getProgramStructure);
     }
 
 
-    public ProgramResponseDTO getProgramStructure(Long programId) {
-
-        Program program = programRepository.findById(programId)
-                .orElseThrow(() -> new RuntimeException("Programma non trovato"));
 
 
+
+    public ProgramResponseDTO getProgramStructure(Program program) {
         ProgramResponseDTO dto = new ProgramResponseDTO();
         dto.setId(program.getId());
         dto.setName(program.getName());
@@ -85,13 +110,11 @@ public class ProgramService {
         dto.setTemplate(program.isTemplate());
         dto.setAssigned(program.isAssigned());
 
-
-        List<Week> weeks = weekRepository.findByProgramId(programId);
+        List<Week> weeks = weekRepository.findByProgramId(program.getId());
         List<WeekDTO> weekDTOs = weeks.stream().map(week -> {
             WeekDTO weekDTO = new WeekDTO();
             weekDTO.setId(week.getId());
             weekDTO.setWeekNumber(week.getWeekNumber());
-
 
             List<Workout> workouts = workoutRepository.findByWeekId(week.getId());
             List<WorkoutDTO> workoutDTOs = workouts.stream().map(workout -> {
@@ -100,7 +123,6 @@ public class ProgramService {
                 workoutDTO.setName(workout.getName());
                 workoutDTO.setCompleted(workout.isCompleted());
                 workoutDTO.setDayOfWeek(workout.getDayOfWeek());
-
 
                 List<WorkoutExercise> workoutExercises = workoutExerciseRepository.findByWorkoutId(workout.getId());
                 List<WorkoutExerciseDTO> exerciseDTOs = workoutExercises.stream().map(we -> {
@@ -124,9 +146,11 @@ public class ProgramService {
                     }
                     return weDTO;
                 }).collect(Collectors.toList());
+
                 workoutDTO.setExercises(exerciseDTOs);
                 return workoutDTO;
             }).collect(Collectors.toList());
+
             weekDTO.setWorkouts(workoutDTOs);
             return weekDTO;
         }).collect(Collectors.toList());
@@ -134,6 +158,7 @@ public class ProgramService {
         dto.setWeeks(weekDTOs);
         return dto;
     }
+
 
     public Program assignProgramToClient(Long programId, Long clientId) {
         Program program = programRepository.findById(programId)

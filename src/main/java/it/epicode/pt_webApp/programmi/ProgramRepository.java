@@ -1,5 +1,7 @@
 package it.epicode.pt_webApp.programmi;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -12,7 +14,7 @@ import java.util.Optional;
 @Repository
 public interface ProgramRepository extends JpaRepository<Program, Long> {
 
-    List<Program> findByPersonalTrainerId(Long personalTrainerId);
+    Page<Program> findByPersonalTrainerId(Long personalTrainerId, Pageable pageable);
 
     List<Program> findByAssignedClientsId(Long clientId);
 

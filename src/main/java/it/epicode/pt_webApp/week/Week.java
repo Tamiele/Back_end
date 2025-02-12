@@ -22,9 +22,9 @@ public class Week {
     @JoinColumn(name = "program_id")
     private Program program;
 
-    @OneToMany(mappedBy = "week", cascade = CascadeType.ALL, orphanRemoval = false)
-    @OrderColumn
-    private List<Workout> workouts= new ArrayList<>();
+    @OneToMany(mappedBy = "week", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Workout> workouts = new ArrayList<>();
+
 
 
 }
