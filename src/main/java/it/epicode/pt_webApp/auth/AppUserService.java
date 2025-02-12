@@ -1,5 +1,6 @@
 package it.epicode.pt_webApp.auth;
 
+import it.epicode.pt_webApp.cliente.Cliente;
 import it.epicode.pt_webApp.personal_trainer.PersonalTrainer;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
@@ -31,21 +32,42 @@ public class AppUserService {
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
 
-    public PersonalTrainer register(String username, String password, String email, String nome, String cognome, LocalDate dataDiNascita) {
-        if (appUserRepository.existsByUsername(username)) {
+    public AppUser register(RegisterRequest request) {
+        if (appUserRepository.existsByUsername(request.getUsername())) {
             throw new EntityExistsException("Username già in uso");
         }
 
-        PersonalTrainer personalTrainer = new PersonalTrainer();
-        personalTrainer.setUsername(username);
-        personalTrainer.setPassword(passwordEncoder.encode(password));
-        personalTrainer.setEmail(email);
-        personalTrainer.setNome(nome);
-        personalTrainer.setCognome(cognome);
-        personalTrainer.setDataDiNascita(dataDiNascita);
-        personalTrainer.setRoles(Set.of(Role.ROLE_PERSONAL_TRAINER));
+        AppUser user;
 
-        return appUserRepository.save(personalTrainer);
+        if (request.getRoles().contains(Role.ROLE_USER)) {
+
+            Cliente cliente = new Cliente();
+            cliente.setUsername(request.getUsername());
+            cliente.setPassword(passwordEncoder.encode(request.getPassword()));
+            cliente.setEmail(request.getEmail());
+
+            cliente.setNome(request.getNome());
+            cliente.setCognome(request.getCognome());
+            cliente.setDataDiNascita(request.getDataDiNascita());
+            cliente.setRoles(request.getRoles());
+            user = cliente;
+        } else if (request.getRoles().contains(Role.ROLE_PERSONAL_TRAINER)) {
+
+            PersonalTrainer pt = new PersonalTrainer();
+            pt.setUsername(request.getUsername());
+            pt.setPassword(passwordEncoder.encode(request.getPassword()));
+            pt.setEmail(request.getEmail());
+
+            pt.setNome(request.getNome());
+            pt.setCognome(request.getCognome());
+            pt.setDataDiNascita(request.getDataDiNascita());
+            pt.setRoles(request.getRoles());
+            user = pt;
+        } else {
+            throw new IllegalArgumentException("Ruolo non valido. Usa ROLE_USER o ROLE_PERSONAL_TRAINER");
+        }
+
+        return appUserRepository.save(user);
     }
 
     public Optional<AppUser> findByUsername(String username) {

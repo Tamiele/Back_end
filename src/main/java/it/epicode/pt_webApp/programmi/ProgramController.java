@@ -113,8 +113,8 @@ public class ProgramController {
     @GetMapping("/my-programs")
     public ResponseEntity<Page<ProgramResponseDTO>> getMyPrograms(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam(defaultValue = "0") int page,  // Pagina predefinita: 0
-            @RequestParam(defaultValue = "5") int size  // Dimensione predefinita: 5
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size
     ) {
         String username = userDetails.getUsername();
 
