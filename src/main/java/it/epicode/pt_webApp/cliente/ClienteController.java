@@ -1,6 +1,8 @@
 package it.epicode.pt_webApp.cliente;
 
 
+import it.epicode.pt_webApp.personal_trainer.PersonalTrainer;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 
@@ -25,6 +27,18 @@ public class ClienteController {
 
     @Autowired
     private ClienteRepository clienteRepository;
+
+
+    @GetMapping
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<Cliente> getLoggedClientProfile(@AuthenticationPrincipal UserDetails userDetails) {
+        String username = userDetails.getUsername();
+
+        Cliente cliente = clienteRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("Personal Trainer non trovato"));
+
+        return ResponseEntity.ok(cliente);
+    }
 
     @PutMapping
     @PreAuthorize("hasRole('ROLE_USER')")

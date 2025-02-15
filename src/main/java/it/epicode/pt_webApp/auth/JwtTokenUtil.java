@@ -25,7 +25,6 @@ public class JwtTokenUtil {
     private long jwtExpirationInMs;
 
 
-
     // Estrae il nome utente dal token JWT
     public String getUsernameFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
@@ -58,14 +57,14 @@ public class JwtTokenUtil {
 
     // Genera un token JWT per l'utente, includendo i ruoli
     public String generateToken(UserDetails userDetails) {
-        Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();
-        List<String> roles = authorities.stream()
-                                        .map(GrantedAuthority::getAuthority)
-                                        .collect(Collectors.toList());
+        Collection<?> authorities = userDetails.getAuthorities();
+        List<String> roles = (List<String>) authorities.stream()
+                .map(item -> item.toString())
+                .collect(Collectors.toList());
 
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
-                .claim("roles", roles) // Aggiunge i ruoli come claim
+                .claim("roles", roles)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationInMs))
                 .signWith(SignatureAlgorithm.HS256, secret)
