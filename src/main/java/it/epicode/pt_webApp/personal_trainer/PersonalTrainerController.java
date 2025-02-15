@@ -10,16 +10,23 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
-@RequestMapping("/api/personalTrainer")
+@RequestMapping("/api/trainer")
 @RequiredArgsConstructor
 public class PersonalTrainerController {
 
@@ -30,55 +37,64 @@ public class PersonalTrainerController {
 
     private final PersonalTrainerRepository personalTrainerRepository;
 
-    @GetMapping("/me")
-    public ResponseEntity<PersonalTrainerDTO> getMe(Authentication authentication) {
-        String username = authentication.getName();
-        PersonalTrainerDTO personalTrainer = personalTrainerService.getPersonalTrainerDetails(username);
-        return ResponseEntity.ok(personalTrainer);
-    }
 
-
-    @PutMapping("/{id}")
-    public ResponseEntity<PersonalTrainer> updateProfile(
-            @PathVariable Long id,
-            @RequestBody PersonalTrainerDTO updateRequest) {
-
-        PersonalTrainer updatedTrainer = personalTrainerService.updateProfile(id, updateRequest);
-        return ResponseEntity.ok(updatedTrainer);
-    }
-
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deletePersonalTrainer(@PathVariable Long id) {
-        personalTrainerService.deletePersonalTrainer(id);
-        return ResponseEntity.ok("Personal Trainer eliminato con successo");
-    }
-
-
-    //ricerca clienti per username e email
-    @GetMapping("/search-client")
+    @GetMapping
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
-    public ResponseEntity<Object> searchClient(
-            @RequestParam(required = false) String username,
-            @RequestParam(required = false) String email
-    ) {
-        if (username != null) {
-            Optional<ClienteDTO> client = clienteService.searchClientByUsername(username);
-            if (client.isPresent()) {
-                return ResponseEntity.ok(client.get());
-            } else {
-                return ResponseEntity.status(404).body("Cliente non trovato con username: " + username);
-            }
-        } else if (email != null) {
-            Optional<ClienteDTO> client = clienteService.searchClientByEmail(email);
-            if (client.isPresent()) {
-                return ResponseEntity.ok(client.get());
-            } else {
-                return ResponseEntity.status(404).body("Cliente non trovato con email: " + email);
-            }
-        } else {
-            return ResponseEntity.badRequest().body("Devi fornire almeno un parametro: username o email");
+    public ResponseEntity<PersonalTrainer> getLoggedTrainerProfile(@AuthenticationPrincipal UserDetails userDetails) {
+        String username = userDetails.getUsername();
+
+        PersonalTrainer trainer = personalTrainerRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("Personal Trainer non trovato"));
+
+        return ResponseEntity.ok(trainer);
+    }
+
+
+    @PutMapping
+    @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
+    public ResponseEntity<PersonalTrainer> updateLoggedTrainer(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody PersonalTrainer personalTrainer) {
+
+        String username = userDetails.getUsername();
+
+        PersonalTrainer trainer = personalTrainerRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Personal Trainer non trovato"));
+
+
+        if (personalTrainer.getUsername() != null && !trainer.getUsername().equals(personalTrainer.getUsername()) &&
+                personalTrainerRepository.existsByUsername(personalTrainer.getUsername())) {
+            throw new RuntimeException("Username già in uso, scegline un altro");
         }
+
+        if (personalTrainer.getEmail() != null && !trainer.getEmail().equals(personalTrainer.getEmail()) &&
+                personalTrainerRepository.existsByEmail(personalTrainer.getEmail())) {
+            throw new RuntimeException("Email già in uso, scegline un'altra");
+        }
+
+        if (personalTrainer.getUsername() != null) trainer.setUsername(personalTrainer.getUsername());
+        if (personalTrainer.getEmail() != null) trainer.setEmail(personalTrainer.getEmail());
+        if (personalTrainer.getNome() != null) trainer.setNome(personalTrainer.getNome());
+        if (personalTrainer.getCognome() != null) trainer.setCognome(personalTrainer.getCognome());
+        if (personalTrainer.getDataDiNascita() != null) trainer.setDataDiNascita(personalTrainer.getDataDiNascita());
+
+        return ResponseEntity.ok(personalTrainerRepository.save(trainer));
+    }
+
+
+    @DeleteMapping("/delete")
+    @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
+    public ResponseEntity<Map<String, String>> deleteLoggedTrainer(@AuthenticationPrincipal UserDetails userDetails) {
+
+        String username = userDetails.getUsername();
+
+        PersonalTrainer trainer = personalTrainerRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Personal Trainer non trovato"));
+
+        personalTrainerService.deletePersonalTrainer(trainer.getId());
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Il tuo account da Personal Trainer è stato eliminato con successo.");
+        return ResponseEntity.ok(response);
     }
 
 
@@ -90,40 +106,29 @@ public class PersonalTrainerController {
     ) {
         String trainerUsername = principal.getName();
         personalTrainerService.assignClienteToTrainerByUsername(trainerUsername, clientId);
-        return ResponseEntity.ok("Cliente assegnato al Personal Trainer con successo");
-    }
-
-
-    @GetMapping("/my-clients")
-    @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
-    public ResponseEntity<Page<ClienteDTO>> getMyClients(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            Principal principal
-    ) {
-        String trainerUsername = principal.getName();
-        Pageable pageable = PageRequest.of(page, size); // Configura la paginazione
-
-        Page<ClienteDTO> clients = personalTrainerService.getAssignedClientsByTrainer(trainerUsername, pageable);
-        return ResponseEntity.ok(clients);
+        return ResponseEntity.ok().build();
     }
 
 
     @DeleteMapping("/remove-client/{clientId}")
     @PreAuthorize("hasRole('ROLE_PERSONAL_TRAINER')")
-    public ResponseEntity<String> removeClient(
+    public ResponseEntity<Map<String, String>> removeClient(
             @PathVariable Long clientId,
-            Principal principal // Ottieni il personal trainer loggato
+            Principal principal
     ) {
         String trainerUsername = principal.getName();
+        Map<String, String> response = new HashMap<>();
 
         try {
             personalTrainerService.removeClientFromTrainer(trainerUsername, clientId);
-            return ResponseEntity.ok("Cliente rimosso con successo dalla lista dei propri clienti");
+            response.put("message", "Cliente rimosso con successo dalla lista dei propri clienti");
+            return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(404).body(e.getMessage());
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(404).body(response);
         } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
