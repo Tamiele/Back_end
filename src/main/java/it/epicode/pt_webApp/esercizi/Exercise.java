@@ -18,7 +18,11 @@ public class Exercise {
     private String name;
     private String nameEn;
     private String muscleGroup;
+
+    @Column(length = 2000)
     private String description;
+
+    @Column(length = 2000)
     private String descriptionEn;
 
 
